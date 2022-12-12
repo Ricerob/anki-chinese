@@ -1,6 +1,18 @@
 from bs4 import BeautifulSoup
 from requests import get
 import argparse
+import os
+
+def download_audio(audio_link, name):
+    if not os.path.exists('./temp'):
+        os.makedirs('./temp')
+
+    r = get(audio_link)
+
+    with open('temp/' + str(name) + '.mp3', 'wb') as file:
+        file.write(r.content)
+
+    print('Downloaded audio link to ./temp/' + name)
 
 def collect_zh_chars(entry):
     zh_chars = []
@@ -11,7 +23,6 @@ def collect_zh_chars(entry):
         zh_chars.append(char.get_text())
 
     return ''.join(zh_chars)
-
 
 def grab_en_def(entry):
     def_list = entry.findChildren("div", {'class': 'meaning'}, recursive=True)
@@ -24,7 +35,8 @@ def grab_en_def(entry):
 
 def grab_audio_link(entry):
     audio_link_entry = entry.find("i", {'class': 'word_audio'})
-    return audio_link_entry['data-audio_url']
+    print(audio_link_entry.attrs['data-audio_url'])
+    return str(audio_link_entry.attrs['data-audio_url'])
 
 def content_scraper(phrase):
     url = 'https://chinese.yabla.com/chinese-english-pinyin-dictionary.php?define=' + str(phrase)
@@ -39,11 +51,12 @@ def content_scraper(phrase):
     content = []
 
     for entry in translate_list:
-        entry_content = []
-        entry_content.append({'zh', collect_zh_chars(entry)})
-        entry_content.append({'pinyin', entry.findNext('span', {'class': 'pinyin'}).get_text()})
-        entry_content.append({'english', grab_en_def(entry)})
-        entry_content.append({'audio_link', grab_audio_link(entry)})
+        entry_content = {}
+        entry_content["zh"] = collect_zh_chars(entry)
+        entry_content["pinyin"] = entry.findNext('span', {'class': 'pinyin'}).get_text()
+        entry_content["english"] = grab_en_def(entry)
+        entry_content["audio_link"] = grab_audio_link(entry)
+        print(entry_content["audio_link"])
         content.append(entry_content)
 
     return content
@@ -68,3 +81,5 @@ if __name__ == '__main__':
         print("Multiple translations found, picking the top result.")
 
     print(content[0])
+
+    download_audio(content[0]['audio_link'], content[0]['english'].strip().replace(" ", "_"))
