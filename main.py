@@ -35,7 +35,6 @@ def grab_en_def(entry):
 
 def grab_audio_link(entry):
     audio_link_entry = entry.find("i", {'class': 'word_audio'})
-    print(audio_link_entry.attrs['data-audio_url'])
     return str(audio_link_entry.attrs['data-audio_url'])
 
 def content_scraper(phrase):
@@ -82,4 +81,9 @@ if __name__ == '__main__':
 
     print(content[0])
 
-    download_audio(content[0]['audio_link'], content[0]['english'].strip().replace(" ", "_"))
+    filename = content[0]['english']
+
+    keepcharacters = (' ', '.', '_')
+    filename = "".join(c for c in filename if c.isalnum() or c in keepcharacters).rstrip()
+
+    download_audio(content[0]['audio_link'], filename)
